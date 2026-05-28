@@ -19,7 +19,7 @@
 |---|---|
 | ⚡  **WebSocket transport** | Bi-directional, sub-100 ms updates; no SSE quirks |
 | 🎨 **15 widget types** | Number · Button · Switch · Slider · Gauge · Donut · Progress · Status · Temperature · Humidity · Image · Input · Joystick · Colour · Chart · **Custom HTML** |
-| 📑 **Multi-tab layout** | Group cards by `setTab("name")`; tab bar scrolls horizontally on mobile |
+| 📑 **Multi-tab layout** | Group cards by `setTab("name")`; pill-style tab bar on tablet/desktop, slide-in hamburger drawer on phones |
 | 🌓 **Dark / light / auto theme** | Honors `prefers-color-scheme`; user override persists in `localStorage` |
 | 🎨 **Brand colour gradient** | Set with `setBrandColor()` — propagates to buttons, sliders, gauges, charts |
 | 🔔 **Notifications from firmware** | `JouleDash.notify(level, msg, ttl)` pushes a toast to every connected tab |
@@ -268,9 +268,14 @@ When the server receives a `cmd` it:
 
 Mobile (390 px wide):
 
-![JouleDash mobile](docs/screenshots/dash-mobile.png)
+| Phone — Overview tab | Phone — Hamburger drawer |
+|---|---|
+| ![JouleDash mobile overview](docs/screenshots/dash-mobile-overview.png) | ![JouleDash mobile menu](docs/screenshots/dash-mobile-menu.png) |
+| KPI cards collapse to 2-up pairs, sparkline + Lucide icon stay legible, hero card stacks vertically with brand-gradient title. | Tap the `☰` icon in the header (right side) and the tab list slides in from the right. Active tab gets a brand accent strip + pulse dot. Dismiss via the `X`, a backdrop tap, or ESC. |
 
 The grid collapses to **6 columns ≤ 760 px** and **2 columns ≤ 420 px**.
+Below 420 px the horizontal tab bar is replaced by a slide-in drawer so a
+narrow viewport never has tabs hidden off-screen.
 
 ---
 
