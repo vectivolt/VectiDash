@@ -25,98 +25,135 @@ static const char DASH_UI_HTML[] PROGMEM = R"HTML(<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="theme-color" content="#0b0d12"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>__TITLE__</title>
+<title>JouleDash</title>
 <style>
+/* JouleDash palette — neutral near-black base, one indigo accent, semantic
+ * dots. Cards have deeper inner surfaces with strong drop-shadow so the
+ * grid reads as floating panels rather than flat blocks. */
 :root{
-  --bg:#0a0c12;--bg2:#0e1320;--panel:rgba(255,255,255,.04);--panel-solid:#141a2a;
-  --ink:#e8ecf5;--ink2:#a5acc1;--muted:#6b7390;--line:rgba(255,255,255,.08);
-  --brand:__BRAND__;--brand-2:#22d3ee;--ok:#3ddc97;--warn:#ffb347;--err:#ff6b81;--info:#7aa6ff;
-  --r:18px;--shadow:0 12px 40px rgba(0,0,0,.35);
-  --grad: linear-gradient(135deg,var(--brand) 0%,var(--brand-2) 100%);
+  /* surfaces */
+  --bg:#08090f; --panel:#11131c; --panel-2:#161824; --panel-solid:#161824;
+  --ink:#f1f3fa; --ink2:#b5bbd0; --muted:#7a809a; --line:rgba(255,255,255,.06);
+  --ring:rgba(99,102,241,.18);
+  /* brand — same family for any gradient companion */
+  --brand:#6366f1; --brand-2:#8b5cf6;
+  /* semantic — used only on status pills / dots, never the brand */
+  --ok:#10b981; --warn:#f59e0b; --err:#ef4444; --info:#06b6d4;
+  --r:20px;
+  --shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 24px 48px -16px rgba(0,0,0,.55), 0 4px 12px -4px rgba(0,0,0,.3);
+  --shadow-hover:0 1px 0 rgba(255,255,255,.06) inset, 0 30px 60px -18px rgba(99,102,241,.35), 0 6px 16px -4px rgba(0,0,0,.35);
+  --grad:linear-gradient(135deg,var(--brand) 0%,var(--brand-2) 100%);
 }
 :root[data-theme="light"]{
-  --bg:#f4f6fc;--bg2:#eef2fa;--panel:rgba(255,255,255,.7);--panel-solid:#fff;
-  --ink:#0f1730;--ink2:#3a4366;--muted:#6b7390;--line:rgba(15,23,48,.08);
-  --shadow:0 10px 28px rgba(20,32,80,.08);
+  --bg:#f6f7fb; --panel:#ffffff; --panel-2:#ffffff; --panel-solid:#fff;
+  --ink:#0b0d18; --ink2:#42485c; --muted:#7d8398; --line:rgba(15,18,40,.08);
+  --shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 24px 48px -22px rgba(15,18,40,.18), 0 4px 12px -4px rgba(15,18,40,.05);
+  --shadow-hover:0 1px 0 rgba(255,255,255,.7) inset, 0 30px 60px -24px rgba(99,102,241,.22), 0 6px 14px -3px rgba(15,18,40,.08);
 }
 @media(prefers-color-scheme:light){:root[data-theme="auto"]{
-  --bg:#f4f6fc;--bg2:#eef2fa;--panel:rgba(255,255,255,.7);--panel-solid:#fff;
-  --ink:#0f1730;--ink2:#3a4366;--muted:#6b7390;--line:rgba(15,23,48,.08);
-  --shadow:0 10px 28px rgba(20,32,80,.08);
+  --bg:#f6f7fb; --panel:#ffffff; --panel-2:#ffffff; --panel-solid:#fff;
+  --ink:#0b0d18; --ink2:#42485c; --muted:#7d8398; --line:rgba(15,18,40,.08);
+  --shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 24px 48px -22px rgba(15,18,40,.18), 0 4px 12px -4px rgba(15,18,40,.05);
+  --shadow-hover:0 1px 0 rgba(255,255,255,.7) inset, 0 30px 60px -24px rgba(99,102,241,.22), 0 6px 14px -3px rgba(15,18,40,.08);
 }}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{
-  font:14.5px/1.5 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
+  font:14.5px/1.5 -apple-system,BlinkMacSystemFont,"Inter","SF Pro Display","Segoe UI",Roboto,sans-serif;
+  font-feature-settings:"cv11","ss01","ss02";
   color:var(--ink);background:var(--bg);
   background-image:
-    radial-gradient(1200px 600px at 10% -10%,color-mix(in srgb,var(--brand) 18%,transparent),transparent 60%),
-    radial-gradient(1000px 500px at 110% 10%,color-mix(in srgb,var(--brand-2) 14%,transparent),transparent 55%);
+    radial-gradient(900px 600px at 12% -8%,color-mix(in srgb,var(--brand) 22%,transparent),transparent 55%),
+    radial-gradient(700px 480px at 92% 6%,color-mix(in srgb,var(--brand-2) 18%,transparent),transparent 55%),
+    radial-gradient(900px 700px at 50% 120%,color-mix(in srgb,var(--brand) 8%,transparent),transparent 60%);
   background-attachment:fixed;min-height:100vh;
 }
 header{
-  position:sticky;top:0;z-index:10;backdrop-filter:saturate(140%) blur(16px);
-  -webkit-backdrop-filter:saturate(140%) blur(16px);
-  background:color-mix(in srgb,var(--bg) 80%,transparent);
-  border-bottom:1px solid var(--line);padding:12px 18px;display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:10;backdrop-filter:saturate(160%) blur(20px);
+  -webkit-backdrop-filter:saturate(160%) blur(20px);
+  background:color-mix(in srgb,var(--bg) 75%,transparent);
+  border-bottom:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;gap:14px;
 }
-.logo{width:34px;height:34px;border-radius:10px;background:var(--grad);
-  display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px;
-  box-shadow:0 6px 20px color-mix(in srgb,var(--brand) 40%,transparent);}
-.title{font-weight:700;font-size:15px;letter-spacing:.2px}
-.sub{font-size:11px;color:var(--muted)}
+.logo{width:36px;height:36px;border-radius:11px;background:var(--grad);
+  display:grid;place-items:center;color:#fff;font-weight:800;font-size:15px;
+  box-shadow:0 8px 24px -4px color-mix(in srgb,var(--brand) 60%,transparent),
+             inset 0 1px 0 rgba(255,255,255,.25);}
+.title{font-weight:600;font-size:15.5px;letter-spacing:-.2px}
+.sub{font-size:11.5px;color:var(--muted);font-weight:500;letter-spacing:.1px}
 .spacer{flex:1}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;
-  background:var(--panel);border:1px solid var(--line);font-size:12px;color:var(--ink2)}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
-.dot.on{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
-.iconbtn{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--panel);
-  color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:.15s}
-.iconbtn:hover{border-color:var(--brand);color:var(--brand)}
-.tabs{display:flex;gap:6px;padding:10px 14px;overflow-x:auto;scrollbar-width:none}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:99px;
+  background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);
+  font-size:12px;color:var(--ink2);font-weight:500;font-variant-numeric:tabular-nums}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 18%,transparent);
+  animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 18%,transparent)}
+                  50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--ok) 6%,transparent)}}
+.iconbtn{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--ink) 4%,transparent);color:var(--ink);
+  display:grid;place-items:center;cursor:pointer;transition:.2s}
+.iconbtn:hover{border-color:color-mix(in srgb,var(--brand) 50%,var(--line));
+  color:var(--brand);transform:translateY(-1px)}
+.tabs{display:flex;gap:4px;padding:14px 22px 8px;overflow-x:auto;scrollbar-width:none;
+  position:sticky;top:65px;z-index:9;background:color-mix(in srgb,var(--bg) 75%,transparent);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .tabs::-webkit-scrollbar{display:none}
-.tab{padding:8px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink2);
-  border-radius:99px;cursor:pointer;font:inherit;font-size:13px;white-space:nowrap;transition:.18s}
-.tab:hover{color:var(--ink);border-color:color-mix(in srgb,var(--brand) 30%,var(--line))}
-.tab.active{background:var(--grad);color:#fff;border-color:transparent;
-  box-shadow:0 6px 18px color-mix(in srgb,var(--brand) 30%,transparent)}
-main{padding:14px;padding-bottom:60px}
-.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+.tab{padding:8px 14px;border:1px solid transparent;background:transparent;color:var(--muted);
+  border-radius:99px;cursor:pointer;font:inherit;font-size:13px;font-weight:500;
+  white-space:nowrap;transition:.2s;letter-spacing:.1px}
+.tab:hover{color:var(--ink2);background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.tab.active{background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink);
+  border-color:var(--line);font-weight:600}
+main{padding:14px 22px 60px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
 .card{
   background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-  padding:16px;display:flex;flex-direction:column;gap:8px;min-height:108px;
-  position:relative;overflow:hidden;backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);transition:.2s;
+  padding:20px;display:flex;flex-direction:column;gap:10px;min-height:120px;
+  position:relative;overflow:hidden;transition:transform .25s cubic-bezier(.3,.8,.2,1),
+    box-shadow .25s ease, border-color .2s ease;
+  box-shadow:var(--shadow);
 }
-.card:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--brand) 25%,var(--line));
-  box-shadow:var(--shadow)}
-.card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.05),transparent 40%);opacity:.6}
-.card.c-success{border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
-.card.c-warning{border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
-.card.c-danger {border-color:color-mix(in srgb,var(--err) 40%,var(--line))}
-.card.c-info   {border-color:color-mix(in srgb,var(--info) 40%,var(--line))}
-.card.c-primary{border-color:color-mix(in srgb,var(--brand) 40%,var(--line))}
-.lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
-.val{font-size:28px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;
-  font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;color:var(--ink);
-  background:linear-gradient(180deg,var(--ink),color-mix(in srgb,var(--ink) 70%,var(--brand)));
-  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.unit{font-size:13px;color:var(--muted);margin-left:4px;-webkit-text-fill-color:var(--muted);font-weight:500}
-.btn{padding:10px 16px;border-radius:12px;border:0;background:var(--grad);color:#fff;
-  font:inherit;font-weight:700;cursor:pointer;transition:.18s;min-height:42px;
-  box-shadow:0 4px 14px color-mix(in srgb,var(--brand) 30%,transparent)}
-.btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px color-mix(in srgb,var(--brand) 40%,transparent)}
+.card:hover{transform:translateY(-2px);
+  border-color:color-mix(in srgb,var(--brand) 30%,var(--line));
+  box-shadow:var(--shadow-hover)}
+.card::before{content:"";position:absolute;inset:0 0 auto 0;height:50%;border-radius:inherit;
+  pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.025),transparent 80%)}
+/* Card accent strip — left border in semantic colour, matches widget purpose */
+.card.c-success::after{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--ok)}
+.card.c-warning::after{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--warn)}
+.card.c-danger::after {content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--err)}
+.card.c-info::after   {content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--info)}
+.card.c-primary::after{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:var(--brand)}
+.lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+/* Big numeric readout — light weight, big size, OpenType tabular-nums so the
+ * value doesn't jiggle as digits change. Native Inter / SF Pro on the system. */
+.val{font-size:32px;font-weight:300;line-height:1.05;font-variant-numeric:tabular-nums;
+  color:var(--ink);letter-spacing:-1px;font-feature-settings:"tnum","ss01"}
+.unit{font-size:13px;color:var(--muted);margin-left:6px;font-weight:500;letter-spacing:0;
+  vertical-align:.18em}
+.btn{padding:11px 18px;border-radius:12px;border:0;background:var(--grad);color:#fff;
+  font:inherit;font-weight:600;cursor:pointer;transition:.2s cubic-bezier(.3,.8,.2,1);
+  min-height:42px;letter-spacing:-.1px;font-size:13.5px;
+  box-shadow:0 8px 24px -8px color-mix(in srgb,var(--brand) 80%,transparent),
+             inset 0 1px 0 rgba(255,255,255,.2)}
+.btn:hover{transform:translateY(-2px);
+  box-shadow:0 14px 28px -10px color-mix(in srgb,var(--brand) 90%,transparent),
+             inset 0 1px 0 rgba(255,255,255,.25)}
 .btn:active{transform:translateY(0)}
-.btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:none}
-.btn.danger{background:linear-gradient(135deg,#ff5470,#ff7e7e);box-shadow:0 4px 14px rgba(255,80,100,.3)}
-.toggle{position:relative;width:54px;height:30px;background:var(--line);border-radius:99px;
-  cursor:pointer;align-self:flex-start;transition:.2s;border:1px solid var(--line)}
-.toggle::after{content:"";position:absolute;left:2px;top:1px;width:24px;height:24px;
-  background:#fff;border-radius:50%;transition:.22s cubic-bezier(.4,1.4,.6,1);
-  box-shadow:0 2px 6px rgba(0,0,0,.25)}
-.toggle.on{background:var(--grad);border-color:transparent}
-.toggle.on::after{left:26px}
+.btn.ghost{background:color-mix(in srgb,var(--ink) 5%,transparent);color:var(--ink);
+  border:1px solid var(--line);box-shadow:none}
+.btn.ghost:hover{border-color:color-mix(in srgb,var(--brand) 50%,var(--line));color:var(--brand)}
+.btn.danger{background:linear-gradient(135deg,var(--err),#f87171);
+  box-shadow:0 8px 24px -8px color-mix(in srgb,var(--err) 70%,transparent),
+             inset 0 1px 0 rgba(255,255,255,.2)}
+.toggle{position:relative;width:48px;height:28px;background:color-mix(in srgb,var(--ink) 12%,transparent);
+  border-radius:99px;cursor:pointer;align-self:flex-start;transition:.25s ease;
+  border:1px solid transparent}
+.toggle::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;
+  background:#fff;border-radius:50%;transition:.28s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 2px 6px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.6)}
+.toggle.on{background:var(--grad);box-shadow:0 4px 14px -4px color-mix(in srgb,var(--brand) 70%,transparent)}
+.toggle.on::after{left:23px}
 .slider-wrap{position:relative;padding-top:18px}
 input[type=range]{width:100%;-webkit-appearance:none;appearance:none;background:transparent;
   height:24px;outline:none}
@@ -185,7 +222,7 @@ input[type=text]:focus,input[type=number]:focus{border-color:var(--brand);
 </style></head><body>
 <header>
   <div class="logo" aria-hidden="true">⚡</div>
-  <div><div class="title">__TITLE__</div><div class="sub">JouleDash · live</div></div>
+  <div><div class="title" id="appTitle">JouleDash</div><div class="sub">live dashboard</div></div>
   <div class="spacer"></div>
   <span class="pill"><span class="dot" id="wsDot"></span><span id="wsTxt">connecting…</span></span>
   <button class="iconbtn" id="themeBtn" aria-label="toggle theme" title="theme">◐</button>
@@ -209,12 +246,25 @@ function open(){
 }
 function send(o){if(ws&&ws.readyState===1)ws.send(JSON.stringify(o))}
 function handle(m){
-  if(m.type==="layout"){layout=m;applyTheme(m.theme);renderTabs();render()}
+  if(m.type==="layout"){
+    layout=m;
+    applyTheme(m.theme);
+    // Live-apply title + brand from the layout frame so setTitle() and
+    // setBrandColor() from the host sketch take effect at runtime even
+    // though the HTML itself ships pre-gzipped (no template substitution).
+    if(m.title){document.title=m.title;const t=$("#appTitle");if(t)t.textContent=m.title}
+    if(m.brand){document.documentElement.style.setProperty("--brand",m.brand);
+                document.querySelector('meta[name="theme-color"]')?.setAttribute("content",m.brand)}
+    renderTabs();render();
+  }
   else if(m.type==="upd"){m.cards.forEach(c=>{values[c.id]=c.value;updateCard(c.id,c.value)})}
   else if(m.type==="notify"){toast(m.level,m.message,m.ttl)}
 }
 function applyTheme(t){
-  const stored=localStorage.getItem("joule-theme");const mode=stored||t||"auto";
+  // Default to dark for first-time visitors — it photographs better and is
+  // closer to the typical embedded-device aesthetic. User toggle persists.
+  const stored=localStorage.getItem("joule-theme");
+  const mode=stored||t||"dark";
   document.documentElement.setAttribute("data-theme",mode);
 }
 $("#themeBtn").onclick=()=>{
@@ -225,9 +275,17 @@ $("#themeBtn").onclick=()=>{
 
 function renderTabs(){
   const t=$("#tabs"),list=layout.tabs&&layout.tabs.length?layout.tabs:["Main"];
+  // Optional URL fragment: /dash#energy → preselect the matching tab on
+  // first paint. Case-insensitive substring match so users can shorten.
+  if(!currentTab){
+    const hash=(location.hash||"").replace(/^#/,"").toLowerCase();
+    if(hash){const m=list.find(x=>x.toLowerCase().includes(hash));if(m)currentTab=m;}
+  }
   if(!currentTab||!list.includes(currentTab))currentTab=list[0];
   t.innerHTML=list.map(x=>`<button class="tab ${x===currentTab?"active":""}" data-t="${x}">${x}</button>`).join("");
-  t.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{currentTab=b.dataset.t;renderTabs();render()});
+  t.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+    currentTab=b.dataset.t;history.replaceState(null,"","#"+currentTab.toLowerCase());renderTabs();render();
+  });
 }
 
 function render(){
