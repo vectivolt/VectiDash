@@ -1,15 +1,16 @@
 # VectiDash
 
 > Real-time IoT dashboard for ESP32 over a single WebSocket.
-> **50 widget types** including donut, joystick, keypad, QR code, heatmap,
-> colour picker, custom-HTML escape-hatch. Multi-tab layout, dark / light /
-> auto theme, push notifications, anonymous-read mode. Apache-2.0 licensed,
-> mobile-first, **46 KB gzipped UI**.
+> **50 `DashType` types — 49 widgets plus `Custom`, the raw-HTML escape
+> hatch** — including donut, joystick, keypad, QR code, heatmap and colour
+> picker. Multi-tab layout, dark / light / auto theme, push notifications,
+> anonymous-read mode. Apache-2.0 licensed, mobile-first,
+> **46,811 B gzipped UI**.
 
-![VectiDash dashboard](docs/screenshots/dash-desktop-overview.png)
+![VectiDash dashboard](docs/screenshots/dash-overview-dark.png)
 
 **Author:** [Chinmoy Bhuyan](mailto:chinmoy@joulepoint.com) · **License:** Apache-2.0
-· **Targets:** ESP32 (S2 / S3 / C3 / classic)
+· **ESP32 only** · **Built and run on:** ESP32-S3
 
 ---
 
@@ -18,7 +19,7 @@
 | | |
 |---|---|
 | ⚡  **WebSocket transport** | Bi-directional, sub-100 ms updates; no SSE quirks |
-| 🎨 **50 widget types** | Every `DashType` renders — 14 readouts, 8 meters, 5 charts, 20 controls, 3 layout. See the **Widget catalogue** below |
+| 🎨 **49 widgets + `Custom`** | Every `DashType` renders — 14 readouts, 8 meters, 5 charts, 20 controls, 3 layout. See the **Widget catalogue** below |
 | 📑 **Multi-tab layout** | Group cards by `setTab("name")`; pill-style tab bar on tablet/desktop, slide-in hamburger drawer on phones |
 | 🌓 **Dark / light / auto theme** | Honors `prefers-color-scheme`; user override persists in `localStorage` |
 | 🎨 **Brand colour gradient** | Set with `setBrandColor()` — propagates to buttons, sliders, gauges, charts |
@@ -26,12 +27,22 @@
 | 🔓 **Optional anonymous-read** | View-only mode without auth; `cmd` frames still require login |
 | 🧩 **Custom-HTML widget** | Drop any DOM snippet into a card body and update it from C++ via `setValue()` |
 | 📐 **12-column responsive grid** | `setWidth(N)` per card; the grid stays 12 columns and each card's span is widened on narrower viewports |
-| 🪶 **46 KB gzipped UI** | Pre-gzipped and served with `Content-Encoding: gzip` — 46,812 bytes on the wire and in flash, 155,079 bytes after the browser inflates it |
+| 🪶 **46,811 B gzipped UI** | Pre-gzipped and served with `Content-Encoding: gzip` — **46,811 bytes** on the wire and in flash, 155,079 bytes after the browser inflates it. It is the heaviest of the four VectiSuite blobs; 49 widgets is what you are paying for |
 | 📱 **Touch-first** | 44 px touch targets, swipe-scrollable tabs, joystick with pointer-capture |
 
 ---
 
 ## Quick start
+
+Three lines on top of an `AsyncWebServer` you already have:
+
+```cpp
+VectiDash.add(&temp);              // register each card before begin()
+VectiDash.begin(&server);          // mounts /, /dash, /dash/login, /dash/ws
+// …and VectiDash.tick(); from loop() — pushes values, runs onChange callbacks
+```
+
+The whole sketch:
 
 ```cpp
 #include <WiFi.h>
@@ -51,7 +62,7 @@ void setup() {
 
   VectiDash.add(&temp);
   VectiDash.add(&led);
-  VectiDash.begin(&server);          //  /, /dash, /dash/ws
+  VectiDash.begin(&server);          //  /, /dash, /dash/login, /dash/ws
   server.begin();
 }
 
@@ -68,12 +79,18 @@ Open `http://<device-ip>/` — done.
 
 ## Widget catalogue
 
-Every widget is declared as a `DashCard` and exposed via the same
-`add()` → `setValue()` → optional `onChange()` flow.
+![VectiDash widget gallery](docs/screenshots/dash-widgets-dark.png)
 
-All 50 `DashType` enumerators render in the bundled UI. The **Wire** column is
-the string `describe()` puts in the layout frame — useful if you replace the
-bundle with your own front-end. Widgets marked **→** send `onChange`.
+Every widget is declared as a `DashCard` and exposed via the same
+`add()` → `setValue()` → optional `onChange()` flow. Every screenshot in this
+README is captured from the mock device by `ui/scripts/capture-docs.mjs`, not
+from a sketch.
+
+All 50 `DashType` enumerators render in the bundled UI — count them in
+`src/VectiDash.h`, one per enumerator, each with a matching `case` in
+`typeName()`. The **Wire** column is the string `describe()` puts in the layout
+frame — useful if you replace the bundle with your own front-end. Widgets
+marked **→** send `onChange`.
 
 ### Readouts (14)
 
@@ -358,10 +375,15 @@ tab, including the one that sent it.
 
 Mobile (390 px wide):
 
-| Phone — Overview tab | Phone — Hamburger drawer |
+| Phone — Overview tab | Phone — Widgets tab |
 |---|---|
-| ![VectiDash mobile overview](docs/screenshots/dash-mobile-overview.png) | ![VectiDash mobile menu](docs/screenshots/dash-mobile-menu.png) |
-| KPI cards collapse to 2-up pairs, sparkline + Lucide icon stay legible, hero card stacks vertically with brand-gradient title. | Tap the `☰` icon in the header (right side) and the tab list slides in from the right. Active tab gets a brand accent strip + pulse dot. Dismiss via the `X`, a backdrop tap, or ESC. |
+| ![VectiDash phone overview](docs/screenshots/dash-overview-phone.png) | ![VectiDash phone widgets](docs/screenshots/dash-widgets-phone.png) |
+| KPI cards collapse to 2-up pairs; the hero card stacks vertically with a brand-gradient title. | Meters, charts and controls each go full-width so touch targets stay at 44 px. |
+
+At phone width the horizontal tab bar is replaced by a slide-in drawer: tap
+the `☰` in the header, the tab list slides in from the right, the active tab
+gets a brand accent strip, and it dismisses via the `X`, a backdrop tap, or
+ESC.
 
 Responsiveness is done in JS off `window.innerWidth`, not with CSS media
 queries: the viewport is classified **`small` ≤ 448 px**, **`tablet` ≤ 800 px**,
@@ -548,22 +570,56 @@ callbacks run — see the callback note above.
 
 ## Dependencies
 
-* `ESP32Async/ESPAsyncWebServer @ ^3.7.0`
+* `ESP32Async/ESPAsyncWebServer @ ^3.11.0`
 * `ESP32Async/AsyncTCP @ ^3.4.10`
 * `bblanchon/ArduinoJson @ ^7.4.0`
+* arduino-esp32 core 2.x or 3.x — built against **2.0.17** (platform
+  `espressif32 @ 6.13.0`)
 
-Either arduino-esp32 core works — `AsyncURIMatcher::exact()` comes from
-ESPAsyncWebServer ≥ 3.7, not from the core. This repo's demo builds on
-platform espressif32 6.13.0 (= arduino-esp32 2.0.17).
+`AsyncURIMatcher::exact()` comes from **ESPAsyncWebServer**, not from the
+Arduino core. `begin()` needs it for all three of `/`, `/dash` and
+`/dash/login` — without exact matching, `/` swallows every route any other
+library mounted. **3.11.0 is the only release verified here**, so that is the
+declared floor. Earlier 3.x releases may carry the matcher; building against
+one is untested, and the symptom if they do not is
+`error: 'AsyncURIMatcher' has not been declared` with nothing pointing at the
+version. Lower the floor yourself only against a release you checked.
 
 ESP32 only. AsyncTCP is an ESP32 library and `AsyncURIMatcher` exists
 only in the ESP32Async 3.x fork, so there is no ESP8266 build.
 
 ---
 
+## Limitations
+
+| Limitation | Detail |
+|---|---|
+| **Heaviest blob in the suite** | 46,811 B of flash against 25,822 B (VectiOTA) and 24,862 B (VectiSerial). It is also heavier than ESP-DASH's bundle. That is the price of 49 widgets in one file — there is no tree-shaking by widget set |
+| **Cards are raw pointers** | `add()` stores the pointer; the card must outlive `VectiDash`. Globals or statics. There is no `remove()` |
+| **`onChange` stalls your `loop()`** | Callbacks run inside `tick()` on the Arduino task. A slow one cannot stall the server's other sockets, but it does stall your sketch, and an interaction lands up to one push interval (default 100 ms) after the tap |
+| **Head-of-line blocking on push** | A tick is skipped entirely while **any** client's send queue is full, so one backgrounded tab on a bad link pauses updates for every viewer until it is reaped |
+| **`Custom` is markup only** | `setCustomHtml()` is injected as markup, so a `<script>` inside it never runs. The `<span id="dash-<id>-out">` hook is the entire contract — anything more interactive means replacing the UI bundle |
+| **Charts draw one style** | `chartSetType()` is carried in the layout frame, but the bundled renderer draws the same gradient area+line for `Line`, `Bar` and `Area`. A chart also needs **two** points before it draws anything |
+| **Structured widgets have caps** | MultiChart ≤ 5 series · Histogram ≤ 24 bars · Scatter ≤ 400 points · Heatmap ≤ 2048 cells and ≤ 64 columns |
+| **Auth is LAN-grade** | The `jdash` handshake ticket is as plaintext as the Basic password it stands in for, and it is regenerated on every reboot — a tab left open across a restart needs a reload. Put the device behind TLS or a VPN if the network is not trusted |
+| **WebSocket unverified on hardware** | The ESP32-S3 build flashes, boots and registers `/` and `/dash`. The dashboard has **not** been exercised against real hardware over a network — the board was verified over USB serial only |
+| **New project** | No CI, no test suite, no users yet, and not in the Arduino Library Manager. Install from Git or PlatformIO's `lib_deps` URL form |
+
+### License position — honest version
+
+VectiDash's own code is Apache-2.0. It links **ESPAsyncWebServer** and
+**AsyncTCP**, both **LGPL-3.0**. There is no dynamic linking on an MCU, so
+LGPL §4's relink obligations attach to the binary you ship. Do not read
+"Apache-2.0" as "no copyleft obligations" — plan for the LGPL terms on the
+async stack. Every ESP32 async-web library in this space inherits the same
+dependency, so this is a property of the ecosystem, not of this library.
+
+---
+
 ## License
 
-Apache-2.0 — see [LICENSE](LICENSE).
+Apache-2.0 — see [LICENSE](LICENSE). See [Limitations](#limitations) for the
+LGPL-3.0 obligations inherited from ESPAsyncWebServer / AsyncTCP.
 
 ---
 
