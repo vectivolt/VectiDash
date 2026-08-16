@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
-// JouleSuite for ESP32 — JouleOTA · JouleSerial · JouleNet · JouleDash
+// VectiSuite for ESP32 — VectiOTA · VectiSerial · VectiNet · VectiDash
 // Author: Chinmoy Bhuyan
-// Email:  dikibhuyan@gmail.com
-// (c) 2026 — MIT License
+// Email:  chinmoy@joulepoint.com
+// (c) 2026 VectiVolt — Apache-2.0 License
 // ---------------------------------------------------------------------------
 //
 // WeatherStation — temperature, humidity, pressure, wind direction +
@@ -12,13 +12,13 @@
 
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
-#include <JouleDash.h>
+#include <VectiDash.h>
 #include <math.h>
 
 AsyncWebServer server(80);
-using joule::DashCard;
-using joule::DashType;
-using joule::DashColor;
+using vecti::DashCard;
+using vecti::DashType;
+using vecti::DashColor;
 
 DashCard hero  (DashType::Custom,      "hero",  "Weather Station");
 DashCard cTemp (DashType::Temperature, "t",     "Temperature",  "°C");
@@ -38,11 +38,11 @@ void setup() {
   WiFi.begin("YOUR_SSID","YOUR_PASS");
   while (WiFi.status() != WL_CONNECTED) delay(200);
 
-  JouleDash.setTitle("Sky · WeatherStation");
-  JouleDash.setBrandColor("#0ea5e9");        // sky blue
-  JouleDash.setTheme("auto");
-  JouleDash.addTab("Now");
-  JouleDash.addTab("Trends");
+  VectiDash.setTitle("Sky · WeatherStation");
+  VectiDash.setBrandColor("#0ea5e9");        // sky blue
+  VectiDash.setTheme("auto");
+  VectiDash.addTab("Now");
+  VectiDash.addTab("Trends");
 
   hero.setWidth(12);
   hero.setCustomHtml(
@@ -77,11 +77,11 @@ void setup() {
     cHumCh .chartPushXY(i, 55 + 12*cos((i-6)/24.0*6.28));
   }
 
-  JouleDash.add(&hero);
-  JouleDash.add(&cTemp); JouleDash.add(&cFeel); JouleDash.add(&cHum); JouleDash.add(&cPres);
-  JouleDash.add(&cUv);   JouleDash.add(&cWind); JouleDash.add(&cDir); JouleDash.add(&cRain); JouleDash.add(&cStat);
-  JouleDash.add(&cTrend);JouleDash.add(&cHumCh);
-  JouleDash.begin(&server, "", "", true);
+  VectiDash.add(&hero);
+  VectiDash.add(&cTemp); VectiDash.add(&cFeel); VectiDash.add(&cHum); VectiDash.add(&cPres);
+  VectiDash.add(&cUv);   VectiDash.add(&cWind); VectiDash.add(&cDir); VectiDash.add(&cRain); VectiDash.add(&cStat);
+  VectiDash.add(&cTrend);VectiDash.add(&cHumCh);
+  VectiDash.begin(&server, "", "", true);
   server.begin();
 }
 
@@ -113,5 +113,5 @@ void loop() {
     cTrend .chartPushXY(h, 22 + 6*sin((h-6)/24.0*6.28));
     cHumCh .chartPushXY(h, 55 + 12*cos((h-6)/24.0*6.28));
   }
-  JouleDash.tick();
+  VectiDash.tick();
 }

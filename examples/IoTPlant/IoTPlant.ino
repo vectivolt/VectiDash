@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
-// JouleSuite for ESP32 — JouleOTA · JouleSerial · JouleNet · JouleDash
+// VectiSuite for ESP32 — VectiOTA · VectiSerial · VectiNet · VectiDash
 // Author: Chinmoy Bhuyan
-// Email:  dikibhuyan@gmail.com
-// (c) 2026 — MIT License
+// Email:  chinmoy@joulepoint.com
+// (c) 2026 VectiVolt — Apache-2.0 License
 // ---------------------------------------------------------------------------
 //
 // IoTPlant — soil-moisture / light / reservoir / pump dashboard for a
@@ -12,13 +12,13 @@
 
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
-#include <JouleDash.h>
+#include <VectiDash.h>
 #include <math.h>
 
 AsyncWebServer server(80);
-using joule::DashCard;
-using joule::DashType;
-using joule::DashColor;
+using vecti::DashCard;
+using vecti::DashType;
+using vecti::DashColor;
 
 constexpr int PIN_PUMP = 4;
 
@@ -43,11 +43,11 @@ void setup() {
   WiFi.begin("YOUR_SSID","YOUR_PASS");
   while (WiFi.status() != WL_CONNECTED) delay(200);
 
-  JouleDash.setTitle("IoT Plant");
-  JouleDash.setBrandColor("#10b981");     // plant green
-  JouleDash.setTheme("auto");
-  JouleDash.addTab("Plant");
-  JouleDash.addTab("Settings");
+  VectiDash.setTitle("IoT Plant");
+  VectiDash.setBrandColor("#10b981");     // plant green
+  VectiDash.setTheme("auto");
+  VectiDash.addTab("Plant");
+  VectiDash.addTab("Settings");
 
   hero.setWidth(12);
   hero.setCustomHtml(
@@ -79,21 +79,21 @@ void setup() {
 
   cPump.onChange([](const String &v){
     digitalWrite(PIN_PUMP, v=="1" ? HIGH : LOW);
-    JouleDash.notify(v=="1" ? joule::NotifyLevel::Success : joule::NotifyLevel::Info,
+    VectiDash.notify(v=="1" ? vecti::NotifyLevel::Success : vecti::NotifyLevel::Info,
                      v=="1" ? "Pump ON · watering" : "Pump OFF", 2000);
   });
   cAuto.onChange([](const String &v){
-    JouleDash.notify(joule::NotifyLevel::Info, v=="1" ? "Auto-water enabled" : "Manual mode", 1500);
+    VectiDash.notify(vecti::NotifyLevel::Info, v=="1" ? "Auto-water enabled" : "Manual mode", 1500);
   });
 
   for (int i = 0; i < 24; i++) cChart.chartPushXY(i, 55 + 18*sin(i/4.0));
 
-  JouleDash.add(&hero);
-  JouleDash.add(&cSoil); JouleDash.add(&cLight);JouleDash.add(&cTank);
-  JouleDash.add(&cTemp); JouleDash.add(&cHum);  JouleDash.add(&cMode); JouleDash.add(&cPump);
-  JouleDash.add(&cChart);
-  JouleDash.add(&cAuto); JouleDash.add(&cThresh);
-  JouleDash.begin(&server, "", "", true);
+  VectiDash.add(&hero);
+  VectiDash.add(&cSoil); VectiDash.add(&cLight);VectiDash.add(&cTank);
+  VectiDash.add(&cTemp); VectiDash.add(&cHum);  VectiDash.add(&cMode); VectiDash.add(&cPump);
+  VectiDash.add(&cChart);
+  VectiDash.add(&cAuto); VectiDash.add(&cThresh);
+  VectiDash.begin(&server, "", "", true);
   server.begin();
 }
 
@@ -129,5 +129,5 @@ void loop() {
     chartT = now;
     cChart.chartPushXY((now/1000)/60.0, 55 + 18 * sin(now/30000.0));
   }
-  JouleDash.tick();
+  VectiDash.tick();
 }

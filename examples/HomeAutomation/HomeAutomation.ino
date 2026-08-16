@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
-// JouleSuite for ESP32 — JouleOTA · JouleSerial · JouleNet · JouleDash
+// VectiSuite for ESP32 — VectiOTA · VectiSerial · VectiNet · VectiDash
 // Author: Chinmoy Bhuyan
-// Email:  dikibhuyan@gmail.com
-// (c) 2026 — MIT License
+// Email:  chinmoy@joulepoint.com
+// (c) 2026 VectiVolt — Apache-2.0 License
 // ---------------------------------------------------------------------------
 //
 // HomeAutomation — multi-room lights/scenes/HVAC dashboard. Drives 4
@@ -13,12 +13,12 @@
 
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
-#include <JouleDash.h>
+#include <VectiDash.h>
 
 AsyncWebServer server(80);
-using joule::DashCard;
-using joule::DashType;
-using joule::DashColor;
+using vecti::DashCard;
+using vecti::DashType;
+using vecti::DashColor;
 
 constexpr int PIN_R1=4, PIN_R2=5, PIN_R3=18, PIN_R4=19, PIN_PWM=23, PIN_R=25, PIN_G=26, PIN_B=27;
 constexpr int CH_PWM=0, CH_R=1, CH_G=2, CH_B=3;   // LEDC channels
@@ -64,12 +64,12 @@ void setup() {
   WiFi.begin("YOUR_SSID","YOUR_PASS");
   while (WiFi.status()!=WL_CONNECTED) delay(200);
 
-  JouleDash.setTitle("Apartment 12B");
-  JouleDash.setBrandColor("#6366f1");           // indigo (JouleSuite default)
-  JouleDash.setTheme("auto");
-  JouleDash.addTab("Rooms");
-  JouleDash.addTab("Climate");
-  JouleDash.addTab("Scenes");
+  VectiDash.setTitle("Apartment 12B");
+  VectiDash.setBrandColor("#6366f1");           // indigo (VectiSuite default)
+  VectiDash.setTheme("auto");
+  VectiDash.addTab("Rooms");
+  VectiDash.addTab("Climate");
+  VectiDash.addTab("Scenes");
 
   hero.setWidth(12);
   hero.setCustomHtml(
@@ -113,17 +113,17 @@ void setup() {
   sceneWake .setTab("Scenes"); sceneWake .setWidth(3);
   sceneAway .setTab("Scenes"); sceneAway .setWidth(3); sceneAway.setColor(DashColor::Danger);
 
-  sceneMovie.onChange([](const String&){JouleDash.notify(joule::NotifyLevel::Success,"🎬 Movie scene activated",2500);});
-  sceneSleep.onChange([](const String&){JouleDash.notify(joule::NotifyLevel::Info,"🌙 Sleeping — lights off",2500);});
-  sceneWake .onChange([](const String&){JouleDash.notify(joule::NotifyLevel::Success,"☀ Good morning",2500);});
-  sceneAway .onChange([](const String&){JouleDash.notify(joule::NotifyLevel::Warn,"🚪 Away — house secured",2500);});
+  sceneMovie.onChange([](const String&){VectiDash.notify(vecti::NotifyLevel::Success,"🎬 Movie scene activated",2500);});
+  sceneSleep.onChange([](const String&){VectiDash.notify(vecti::NotifyLevel::Info,"🌙 Sleeping — lights off",2500);});
+  sceneWake .onChange([](const String&){VectiDash.notify(vecti::NotifyLevel::Success,"☀ Good morning",2500);});
+  sceneAway .onChange([](const String&){VectiDash.notify(vecti::NotifyLevel::Warn,"🚪 Away — house secured",2500);});
 
-  JouleDash.add(&hero);
-  JouleDash.add(&cLiving); JouleDash.add(&cKit); JouleDash.add(&cBed); JouleDash.add(&cPorch);
-  JouleDash.add(&cDimmer); JouleDash.add(&cRgb);
-  JouleDash.add(&cAc); JouleDash.add(&cAcMode); JouleDash.add(&cTemp); JouleDash.add(&cHum); JouleDash.add(&cPower);
-  JouleDash.add(&sceneMovie); JouleDash.add(&sceneSleep); JouleDash.add(&sceneWake); JouleDash.add(&sceneAway);
-  JouleDash.begin(&server, "", "", true);
+  VectiDash.add(&hero);
+  VectiDash.add(&cLiving); VectiDash.add(&cKit); VectiDash.add(&cBed); VectiDash.add(&cPorch);
+  VectiDash.add(&cDimmer); VectiDash.add(&cRgb);
+  VectiDash.add(&cAc); VectiDash.add(&cAcMode); VectiDash.add(&cTemp); VectiDash.add(&cHum); VectiDash.add(&cPower);
+  VectiDash.add(&sceneMovie); VectiDash.add(&sceneSleep); VectiDash.add(&sceneWake); VectiDash.add(&sceneAway);
+  VectiDash.begin(&server, "", "", true);
   server.begin();
 }
 
@@ -141,5 +141,5 @@ void loop() {
     onCount += digitalRead(PIN_R1) + digitalRead(PIN_R2) + digitalRead(PIN_R3) + digitalRead(PIN_R4);
     hero.setValue(String(onCount) + " of 4 lights on · " + String((int)cTemp.value().toFloat()) + " °C indoors");
   }
-  JouleDash.tick();
+  VectiDash.tick();
 }

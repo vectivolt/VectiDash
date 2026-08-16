@@ -1,11 +1,11 @@
 // ---------------------------------------------------------------------------
-// JouleSuite for ESP32 — JouleOTA · JouleSerial · JouleNet · JouleDash
+// VectiSuite for ESP32 — VectiOTA · VectiSerial · VectiNet · VectiDash
 // Author: Chinmoy Bhuyan
-// Email:  dikibhuyan@gmail.com
-// (c) 2026 — MIT License
+// Email:  chinmoy@joulepoint.com
+// (c) 2026 VectiVolt — Apache-2.0 License
 // ---------------------------------------------------------------------------
 
-// JouleDash implementation. Wire format:
+// VectiDash implementation. Wire format:
 //
 //   client -> server:
 //     {type:"hello"}                              — request initial layout + values
@@ -23,19 +23,19 @@
 // Two tasks touch this file. The AsyncTCP task runs the HTTP handlers and every
 // WebSocket callback; the Arduino loop() task runs tick(), the sketch's
 // setValue() calls and the onChange callbacks. The AsyncTCP side only ever
-// touches the small block of state guarded by _mx (see JouleDash.h) and hands
+// touches the small block of state guarded by _mx (see VectiDash.h) and hands
 // work to loop() through it — it never reads a card and never serialises a
 // frame, so card state needs no lock at all.
 
-#include "JouleDash.h"
-#include "JouleDash_ui_gz.h"
+#include "VectiDash.h"
+#include "VectiDash_ui_gz.h"
 #include <ArduinoJson.h>
 #include <algorithm>
 #include <memory>
 
 namespace {
 // Serve the pre-compressed UI blob with `Content-Encoding: gzip`. Browsers
-// transparently inflate. Measured off the blob in JouleDash_ui_gz.h: 155,079
+// transparently inflate. Measured off the blob in VectiDash_ui_gz.h: 155,079
 // bytes of HTML go out as 46,812 bytes on the wire, which is what makes it
 // survive weak Wi-Fi links where the uncompressed chunked variant stalls
 // partway through.
@@ -63,7 +63,7 @@ constexpr size_t kMaxRxBytes = 4096;
 constexpr size_t kMaxPendingCmds = 32;
 }
 
-namespace joule {
+namespace vecti {
 
 // -------------------- DashCardBase ----------------------------------------
 
@@ -203,18 +203,18 @@ void DashCardBase::ingest(const String &payload) {
   if (_onChange) _onChange(payload);
 }
 
-// -------------------- JouleDashClass --------------------------------------
+// -------------------- VectiDashClass --------------------------------------
 
-JouleDashClass::JouleDashClass() {}
+VectiDashClass::VectiDashClass() {}
 
-void JouleDashClass::add(DashCardBase *c) {
+void VectiDashClass::add(DashCardBase *c) {
   _cards.push_back(c);
   _layoutDirty = true;
 }
 
-void JouleDashClass::refreshLayout() { _layoutDirty = true; }
+void VectiDashClass::refreshLayout() { _layoutDirty = true; }
 
-String JouleDashClass::_layoutJson() const {
+String VectiDashClass::_layoutJson() const {
   JsonDocument d;
   d["type"]  = "layout";
   d["title"] = _title;
@@ -234,7 +234,7 @@ String JouleDashClass::_layoutJson() const {
 // clearing the dirty flags here is safe: no client is left owed an update.
 // (Nothing needs a full dump: the layout frame carries every card's value, so
 // that is what a fresh client is bootstrapped with.)
-String JouleDashClass::_updatesJson() {
+String VectiDashClass::_updatesJson() {
   JsonDocument d;
   d["type"] = "upd";
   auto arr = d["cards"].to<JsonArray>();
@@ -248,7 +248,7 @@ String JouleDashClass::_updatesJson() {
   String s; serializeJson(d, s); return s;
 }
 
-bool JouleDashClass::_auth(AsyncWebServerRequest *req, bool requireWrite) const {
+bool VectiDashClass::_auth(AsyncWebServerRequest *req, bool requireWrite) const {
   if (_user.length() == 0) return true;
   if (_anonRead && !requireWrite) return true;
   if (!req) return false;
@@ -261,17 +261,17 @@ bool JouleDashClass::_auth(AsyncWebServerRequest *req, bool requireWrite) const 
 }
 
 // Both of these read/write _writers and _rx. Call with _mx held.
-bool JouleDashClass::_canWrite(uint32_t clientId) const {
+bool VectiDashClass::_canWrite(uint32_t clientId) const {
   if (_user.length() == 0) return true;
   return std::find(_writers.begin(), _writers.end(), clientId) != _writers.end();
 }
 
-void JouleDashClass::_forget(uint32_t clientId) {
+void VectiDashClass::_forget(uint32_t clientId) {
   _writers.erase(std::remove(_writers.begin(), _writers.end(), clientId), _writers.end());
   _rx.erase(clientId);
 }
 
-void JouleDashClass::begin(AsyncWebServer *server, const String &username, const String &password, bool allowAnonymousRead) {
+void VectiDashClass::begin(AsyncWebServer *server, const String &username, const String &password, bool allowAnonymousRead) {
   _server = server; _user = username; _pass = password; _anonRead = allowAnonymousRead;
 
   if (_user.length()) {
@@ -318,7 +318,7 @@ void JouleDashClass::begin(AsyncWebServer *server, const String &username, const
   _attachWs();
 }
 
-void JouleDashClass::_attachWs() {
+void VectiDashClass::_attachWs() {
   _ws = new AsyncWebSocket("/dash/ws");
   // The socket is the control channel: gating only the page would leave every
   // relay one `wscat` away. Anonymous-read installs still complete the upgrade
@@ -392,7 +392,7 @@ void JouleDashClass::_attachWs() {
   _server->addHandler(_ws);
 }
 
-void JouleDashClass::tick() {
+void VectiDashClass::tick() {
   if (!_ws) return;
   uint32_t now = millis();
   if ((now - _lastPush) < _pushMs) return;
@@ -400,7 +400,7 @@ void JouleDashClass::tick() {
 
   // Take everything the AsyncTCP task left us, then drop the lock before
   // touching a card: ingest() runs the host callback, which is allowed to be
-  // slow and to call back into JouleDash.
+  // slow and to call back into VectiDash.
   std::vector<PendingCmd> cmds;
   {
     std::lock_guard<std::mutex> lk(_mx);
@@ -445,7 +445,7 @@ void JouleDashClass::tick() {
   _ws->textAll(_updatesJson());
 }
 
-void JouleDashClass::notify(NotifyLevel lvl, const String &message, uint32_t ttlMs) {
+void VectiDashClass::notify(NotifyLevel lvl, const String &message, uint32_t ttlMs) {
   if (!_ws) return;
   const char *lvls[] = {"info","success","warn","error"};
   uint8_t li = (uint8_t)lvl;
@@ -456,6 +456,6 @@ void JouleDashClass::notify(NotifyLevel lvl, const String &message, uint32_t ttl
   _ws->textAll(s);
 }
 
-} // namespace joule
+} // namespace vecti
 
-joule::JouleDashClass JouleDash;
+vecti::VectiDashClass VectiDash;

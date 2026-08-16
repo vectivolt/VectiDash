@@ -1,11 +1,11 @@
 // ---------------------------------------------------------------------------
-// JouleSuite for ESP32 — JouleOTA · JouleSerial · JouleNet · JouleDash
+// VectiSuite for ESP32 — VectiOTA · VectiSerial · VectiNet · VectiDash
 // Author: Chinmoy Bhuyan
-// Email:  dikibhuyan@gmail.com
-// (c) 2026 — MIT License
+// Email:  chinmoy@joulepoint.com
+// (c) 2026 VectiVolt — Apache-2.0 License
 // ---------------------------------------------------------------------------
 //
-// WidgetGallery — the 16 most-used JouleDash widget types in one dashboard,
+// WidgetGallery — the 16 most-used VectiDash widget types in one dashboard,
 // with simulated values that exercise the full visual range. Use this sketch
 // as a living style guide: drop into a fresh board, look at the components
 // side-by-side, copy what you need into your own sketch.
@@ -19,17 +19,17 @@
 
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
-#include <JouleDash.h>
+#include <VectiDash.h>
 #include <math.h>
 
 AsyncWebServer server(80);
-using joule::DashCard;
-using joule::DashType;
-using joule::DashColor;
+using vecti::DashCard;
+using vecti::DashType;
+using vecti::DashColor;
 
 // Keep them in declaration order so the layout reads top-to-bottom matching
-// the JouleDash README's widget catalogue.
-DashCard hero    (DashType::Custom,      "hero",  "JouleDash Widget Gallery");
+// the VectiDash README's widget catalogue.
+DashCard hero    (DashType::Custom,      "hero",  "VectiDash Widget Gallery");
 
 DashCard cNumber (DashType::Number,      "num",   "Number card",      "kW");
 DashCard cTemp   (DashType::Temperature, "tmp",   "Temperature",      "°C");
@@ -54,12 +54,12 @@ void setup() {
   WiFi.begin("YOUR_SSID", "YOUR_PASS");
   while (WiFi.status() != WL_CONNECTED) delay(200);
 
-  JouleDash.setTitle("JouleDash · Widget Gallery");
-  JouleDash.setBrandColor("#6366f1");        // indigo — JouleSuite default
-  JouleDash.setTheme("auto");
-  JouleDash.addTab("Display");
-  JouleDash.addTab("Interactive");
-  JouleDash.addTab("Indicators");
+  VectiDash.setTitle("VectiDash · Widget Gallery");
+  VectiDash.setBrandColor("#6366f1");        // indigo — VectiSuite default
+  VectiDash.setTheme("auto");
+  VectiDash.addTab("Display");
+  VectiDash.addTab("Interactive");
+  VectiDash.addTab("Indicators");
 
   // ---- Hero ---------------------------------------------------------------
   hero.setWidth(12);
@@ -72,7 +72,7 @@ void setup() {
           "Live demo</div>"
         "<div style='font-size:22px;font-weight:800;background:var(--grad);"
           "-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent'>"
-          "The 16 most-used JouleDash widgets</div>"
+          "The 16 most-used VectiDash widgets</div>"
         "<div style='font-size:12px;color:var(--muted);margin-top:2px'>"
           "Tick: <span id='dash-hero-out'>—</span></div>"
       "</div></div>");
@@ -88,7 +88,7 @@ void setup() {
   // 1x1 PNG placeholder (transparent purple) so the Image card has something
   // pleasing to show without needing an external URL. Replace at runtime
   // with setValue("https://…") to switch to a real source.
-  cImage.setValue("https://dummyimage.com/600x180/6366f1/ffffff&text=JouleDash");
+  cImage.setValue("https://dummyimage.com/600x180/6366f1/ffffff&text=VectiDash");
 
   // ---- Interactive tab ---
   cButton.setTab("Interactive"); cButton.setWidth(3); cButton.setColor(DashColor::Primary);
@@ -98,18 +98,18 @@ void setup() {
   cColor .setTab("Interactive"); cColor .setWidth(6); cColor.setValue("#6366f1");
 
   cButton.onChange([](const String &){
-    JouleDash.notify(joule::NotifyLevel::Success, "Button clicked!", 2000);
+    VectiDash.notify(vecti::NotifyLevel::Success, "Button clicked!", 2000);
   });
   cSwitch.onChange([](const String &v){
-    JouleDash.notify(joule::NotifyLevel::Info, String("Switch ") + (v=="1" ? "on":"off"), 1500);
+    VectiDash.notify(vecti::NotifyLevel::Info, String("Switch ") + (v=="1" ? "on":"off"), 1500);
   });
   cSlider.onChange([](const String &v){
     Serial.printf("slider → %s\n", v.c_str());
   });
   cColor.onChange([](const String &v){
-    JouleDash.setBrandColor(v);
-    JouleDash.refreshLayout();
-    JouleDash.notify(joule::NotifyLevel::Info, "Brand: " + v, 2000);
+    VectiDash.setBrandColor(v);
+    VectiDash.refreshLayout();
+    VectiDash.notify(vecti::NotifyLevel::Info, "Brand: " + v, 2000);
   });
 
   // ---- Indicators tab ---
@@ -121,13 +121,13 @@ void setup() {
   // Pre-fill chart so the first viewer sees a populated trace.
   for (int i = 0; i < 30; i++) cChart.chartPushXY(i, 50 + 25*sin(i/4.0));
 
-  JouleDash.add(&hero);
-  JouleDash.add(&cNumber); JouleDash.add(&cTemp);  JouleDash.add(&cHumid);  JouleDash.add(&cStatus);
-  JouleDash.add(&cImage);  JouleDash.add(&cInput);
-  JouleDash.add(&cButton); JouleDash.add(&cSwitch);JouleDash.add(&cSlider); JouleDash.add(&cJoy); JouleDash.add(&cColor);
-  JouleDash.add(&cProg);   JouleDash.add(&cGauge); JouleDash.add(&cDonut);  JouleDash.add(&cChart);
+  VectiDash.add(&hero);
+  VectiDash.add(&cNumber); VectiDash.add(&cTemp);  VectiDash.add(&cHumid);  VectiDash.add(&cStatus);
+  VectiDash.add(&cImage);  VectiDash.add(&cInput);
+  VectiDash.add(&cButton); VectiDash.add(&cSwitch);VectiDash.add(&cSlider); VectiDash.add(&cJoy); VectiDash.add(&cColor);
+  VectiDash.add(&cProg);   VectiDash.add(&cGauge); VectiDash.add(&cDonut);  VectiDash.add(&cChart);
 
-  JouleDash.begin(&server, "", "", true);
+  VectiDash.begin(&server, "", "", true);
   server.begin();
   Serial.println("Open http://" + WiFi.localIP().toString() + "/");
 }
@@ -150,5 +150,5 @@ void loop() {
     chartT = now;
     cChart.chartPushXY((now - startMs)/1000.0f, 50 + 25*sin(now/4000.0));
   }
-  JouleDash.tick();
+  VectiDash.tick();
 }

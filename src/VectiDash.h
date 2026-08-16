@@ -1,15 +1,15 @@
 // ---------------------------------------------------------------------------
-// JouleSuite for ESP32 — JouleOTA · JouleSerial · JouleNet · JouleDash
+// VectiSuite for ESP32 — VectiOTA · VectiSerial · VectiNet · VectiDash
 // Author: Chinmoy Bhuyan
-// Email:  dikibhuyan@gmail.com
-// (c) 2026 — MIT License
+// Email:  chinmoy@joulepoint.com
+// (c) 2026 VectiVolt — Apache-2.0 License
 // ---------------------------------------------------------------------------
 
-// JouleDash — real-time IoT dashboard, all widgets free, all source MIT.
+// VectiDash — real-time IoT dashboard, all widgets free, all source Apache-2.0.
 //
 // Why this exists: ESP-DASH paywalls every interesting widget behind Pro,
 // runs on Server-Sent Events (broken on Safari over long sessions), and
-// gives you no escape hatch for a custom UI snippet. JouleDash includes
+// gives you no escape hatch for a custom UI snippet. VectiDash includes
 // every widget in the box, transports over a single WebSocket, and adds:
 //
 //   * 50 widgets — the whole DashType enum below renders in the bundled UI:
@@ -24,10 +24,10 @@
 //
 // Usage:
 //
-//     #include <JouleDash.h>
-//     joule::DashCard temp(joule::DashType::Number, "temp", "Temperature","°C", 0, 50);
-//     void setup(){ JouleDash.add(&temp); JouleDash.begin(&server,"admin","joule"); }
-//     void loop(){ temp.setValue(readTemp()); JouleDash.tick(); }
+//     #include <VectiDash.h>
+//     vecti::DashCard temp(vecti::DashType::Number, "temp", "Temperature","°C", 0, 50);
+//     void setup(){ VectiDash.add(&temp); VectiDash.begin(&server,"admin","vecti"); }
+//     void loop(){ temp.setValue(readTemp()); VectiDash.tick(); }
 #pragma once
 
 #include <Arduino.h>
@@ -37,7 +37,7 @@
 #include <mutex>
 #include <vector>
 
-namespace joule {
+namespace vecti {
 
 // Widget kinds. Enumerator VALUES are part of nothing persisted — the wire
 // format sends the lowercase name from typeName() — but keep appending rather
@@ -186,9 +186,9 @@ using DashCard = DashCardBase;
 
 enum class NotifyLevel : uint8_t { Info=0, Success, Warn, Error };
 
-class JouleDashClass {
+class VectiDashClass {
 public:
-  JouleDashClass();
+  VectiDashClass();
 
   // Routes: `/` (302), `/dash`, `/dash/login`, `/dash/ws`.
   //
@@ -202,7 +202,7 @@ public:
              const String &password = "",
              bool allowAnonymousRead = false);
 
-  // Register a card. The card pointer must outlive JouleDash (typical
+  // Register a card. The card pointer must outlive VectiDash (typical
   // pattern: static / global in the host sketch).
   void add(DashCardBase *card);
 
@@ -258,7 +258,7 @@ private:
   // --- loop() task only ---
   std::vector<DashCardBase*> _cards;
   std::vector<String> _tabs;
-  String _title = "JouleDash";
+  String _title = "VectiDash";
   String _brand = "#7c5cff";
   String _theme = "auto";
   uint32_t _pushMs = 100;
@@ -266,6 +266,6 @@ private:
   bool _layoutDirty = true;
 };
 
-} // namespace joule
+} // namespace vecti
 
-extern joule::JouleDashClass JouleDash;
+extern vecti::VectiDashClass VectiDash;

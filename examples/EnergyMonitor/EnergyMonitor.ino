@@ -1,8 +1,8 @@
 // ---------------------------------------------------------------------------
-// JouleSuite for ESP32 — JouleOTA · JouleSerial · JouleNet · JouleDash
+// VectiSuite for ESP32 — VectiOTA · VectiSerial · VectiNet · VectiDash
 // Author: Chinmoy Bhuyan
-// Email:  dikibhuyan@gmail.com
-// (c) 2026 — MIT License
+// Email:  chinmoy@joulepoint.com
+// (c) 2026 VectiVolt — Apache-2.0 License
 // ---------------------------------------------------------------------------
 //
 // EnergyMonitor — production-ready single-phase home energy meter
@@ -13,13 +13,13 @@
 
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
-#include <JouleDash.h>
+#include <VectiDash.h>
 #include <math.h>
 
 AsyncWebServer server(80);
-using joule::DashCard;
-using joule::DashType;
-using joule::DashColor;
+using vecti::DashCard;
+using vecti::DashType;
+using vecti::DashColor;
 
 DashCard hero    (DashType::Custom,   "hero",  "Energy Monitor");
 DashCard cNow    (DashType::Number,   "now",   "Current power", "W");
@@ -51,12 +51,12 @@ void setup() {
   WiFi.begin("YOUR_SSID","YOUR_PASS");
   while (WiFi.status() != WL_CONNECTED) delay(200);
 
-  JouleDash.setTitle("Energy Monitor");
-  JouleDash.setBrandColor("#10b981");          // green for energy
-  JouleDash.setTheme("auto");
-  JouleDash.addTab("Live");
-  JouleDash.addTab("Quality");
-  JouleDash.addTab("Insight");
+  VectiDash.setTitle("Energy Monitor");
+  VectiDash.setBrandColor("#10b981");          // green for energy
+  VectiDash.setTheme("auto");
+  VectiDash.addTab("Live");
+  VectiDash.addTab("Quality");
+  VectiDash.addTab("Insight");
 
   hero.setWidth(12);
   hero.setCustomHtml(
@@ -89,11 +89,11 @@ void setup() {
   cPeak.setValue("ok");
   for (int i = 0; i < 30; i++) cTrend.chartPushXY(i, 600 + 400*sin(i/5.0));
 
-  JouleDash.add(&hero); JouleDash.add(&cNow); JouleDash.add(&cToday); JouleDash.add(&cMonth);
-  JouleDash.add(&cCost); JouleDash.add(&cBudget); JouleDash.add(&cMix); JouleDash.add(&cPeak);
-  JouleDash.add(&cVolt); JouleDash.add(&cCur); JouleDash.add(&cPF); JouleDash.add(&cFreq);
-  JouleDash.add(&cTrend);
-  JouleDash.begin(&server, "", "", true);
+  VectiDash.add(&hero); VectiDash.add(&cNow); VectiDash.add(&cToday); VectiDash.add(&cMonth);
+  VectiDash.add(&cCost); VectiDash.add(&cBudget); VectiDash.add(&cMix); VectiDash.add(&cPeak);
+  VectiDash.add(&cVolt); VectiDash.add(&cCur); VectiDash.add(&cPF); VectiDash.add(&cFreq);
+  VectiDash.add(&cTrend);
+  VectiDash.begin(&server, "", "", true);
   server.begin();
 }
 
@@ -130,5 +130,5 @@ void loop() {
     chartT = now;
     cTrend.chartPushXY((now - dayStart)/1000.0f, readPower());
   }
-  JouleDash.tick();
+  VectiDash.tick();
 }

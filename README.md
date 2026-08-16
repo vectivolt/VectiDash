@@ -1,14 +1,14 @@
-# JouleDash
+# VectiDash
 
 > Real-time IoT dashboard for ESP32 over a single WebSocket.
 > **50 widget types** including donut, joystick, keypad, QR code, heatmap,
 > colour picker, custom-HTML escape-hatch. Multi-tab layout, dark / light /
-> auto theme, push notifications, anonymous-read mode. MIT-licensed,
+> auto theme, push notifications, anonymous-read mode. Apache-2.0 licensed,
 > mobile-first, **46 KB gzipped UI**.
 
-![JouleDash dashboard](docs/screenshots/dash-desktop-overview.png)
+![VectiDash dashboard](docs/screenshots/dash-desktop-overview.png)
 
-**Author:** [Chinmoy Bhuyan](mailto:dikibhuyan@gmail.com) · **License:** MIT
+**Author:** [Chinmoy Bhuyan](mailto:chinmoy@joulepoint.com) · **License:** Apache-2.0
 · **Targets:** ESP32 (S2 / S3 / C3 / classic)
 
 ---
@@ -22,7 +22,7 @@
 | 📑 **Multi-tab layout** | Group cards by `setTab("name")`; pill-style tab bar on tablet/desktop, slide-in hamburger drawer on phones |
 | 🌓 **Dark / light / auto theme** | Honors `prefers-color-scheme`; user override persists in `localStorage` |
 | 🎨 **Brand colour gradient** | Set with `setBrandColor()` — propagates to buttons, sliders, gauges, charts |
-| 🔔 **Notifications from firmware** | `JouleDash.notify(level, msg, ttl)` pushes a toast to every connected tab |
+| 🔔 **Notifications from firmware** | `VectiDash.notify(level, msg, ttl)` pushes a toast to every connected tab |
 | 🔓 **Optional anonymous-read** | View-only mode without auth; `cmd` frames still require login |
 | 🧩 **Custom-HTML widget** | Drop any DOM snippet into a card body and update it from C++ via `setValue()` |
 | 📐 **12-column responsive grid** | `setWidth(N)` per card; the grid stays 12 columns and each card's span is widened on narrower viewports |
@@ -36,11 +36,11 @@
 ```cpp
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
-#include <JouleDash.h>
+#include <VectiDash.h>
 
 AsyncWebServer server(80);
-joule::DashCard temp (joule::DashType::Number, "t",  "Temperature", "°C");
-joule::DashCard led  (joule::DashType::Switch, "l",  "Onboard LED");
+vecti::DashCard temp (vecti::DashType::Number, "t",  "Temperature", "°C");
+vecti::DashCard led  (vecti::DashType::Switch, "l",  "Onboard LED");
 
 void setup() {
   WiFi.begin("YOUR_SSID","YOUR_PASS");
@@ -49,16 +49,16 @@ void setup() {
   pinMode(LED_BUILTIN,OUTPUT);
   led.onChange([](const String &v){ digitalWrite(LED_BUILTIN, v=="1"); });
 
-  JouleDash.add(&temp);
-  JouleDash.add(&led);
-  JouleDash.begin(&server);          //  /, /dash, /dash/ws
+  VectiDash.add(&temp);
+  VectiDash.add(&led);
+  VectiDash.begin(&server);          //  /, /dash, /dash/ws
   server.begin();
 }
 
 void loop() {
   static uint32_t t=0;
   if (millis()-t > 1000) { t=millis(); temp.setValue(readSensor()); }
-  JouleDash.tick();                  // pushes dirty cards (≤10 Hz default)
+  VectiDash.tick();                  // pushes dirty cards (≤10 Hz default)
 }
 ```
 
@@ -200,7 +200,7 @@ void   setOptions(const String &pipeSeparated);   // "Eco|Standard|Boost"
 String options() const;
 ```
 
-Pipe-separated, matching JouleNet's parameter convention. A `Checklist`
+Pipe-separated, matching VectiNet's parameter convention. A `Checklist`
 reports its selection back the same way (`"Eco|Boost"`). The list rides in the
 layout frame as `opts`, so call `setOptions()` before `add()` or follow it with
 `refreshLayout()`.
@@ -256,7 +256,7 @@ a reboot — still belongs behind a flag, not inside the callback.
 This also means card values are only ever touched from one task, so
 `setValue()` from `loop()` never races the socket.
 
-### `JouleDashClass`
+### `VectiDashClass`
 
 ```cpp
 void begin(AsyncWebServer *server,
@@ -264,7 +264,7 @@ void begin(AsyncWebServer *server,
            const String &password = "",
            bool allowAnonymousRead = false);
 
-void add(DashCardBase *card);              // register a card (raw pointer; outlive JouleDash)
+void add(DashCardBase *card);              // register a card (raw pointer; outlive VectiDash)
 void refreshLayout();                       // force a re-push of layout to all clients
 void tick();                                // call from loop(); coalesced push of dirty cards
 
@@ -301,7 +301,7 @@ void notify(NotifyLevel lvl, const String &msg, uint32_t ttlMs = 5000);
 // On connect (and on refreshLayout()):
 {
   "type":  "layout",
-  "title": "JouleSuite Dashboard",
+  "title": "VectiSuite Dashboard",
   "brand": "#7c5cff",
   "theme": "auto",
   "tabs":  ["Overview","Controls","Charts"],
@@ -360,7 +360,7 @@ Mobile (390 px wide):
 
 | Phone — Overview tab | Phone — Hamburger drawer |
 |---|---|
-| ![JouleDash mobile overview](docs/screenshots/dash-mobile-overview.png) | ![JouleDash mobile menu](docs/screenshots/dash-mobile-menu.png) |
+| ![VectiDash mobile overview](docs/screenshots/dash-mobile-overview.png) | ![VectiDash mobile menu](docs/screenshots/dash-mobile-menu.png) |
 | KPI cards collapse to 2-up pairs, sparkline + Lucide icon stay legible, hero card stacks vertically with brand-gradient title. | Tap the `☰` icon in the header (right side) and the tab list slides in from the right. Active tab gets a brand accent strip + pulse dot. Dismiss via the `X`, a backdrop tap, or ESC. |
 
 Responsiveness is done in JS off `window.innerWidth`, not with CSS media
@@ -379,14 +379,14 @@ off-screen. (The only `@media` rules in the bundle are
 ### React to a slider
 
 ```cpp
-joule::DashCard bright(joule::DashType::Slider, "b", "Brightness", "%");
+vecti::DashCard bright(vecti::DashType::Slider, "b", "Brightness", "%");
 bright.setRange(0, 255);
 
 void setup() {
   bright.onChange([](const String &v){
     ledcWrite(0, v.toInt());        // PWM on LEDC channel 0
   });
-  JouleDash.add(&bright);
+  VectiDash.add(&bright);
 }
 ```
 
@@ -396,17 +396,17 @@ void setup() {
 push interval still goes in `loop()` behind a flag:
 
 ```cpp
-joule::DashCard reboot(joule::DashType::Button, "rb", "Reboot");
+vecti::DashCard reboot(vecti::DashType::Button, "rb", "Reboot");
 volatile uint32_t rebootAt = 0;
 
-reboot.setColor(joule::DashColor::Danger);
+reboot.setColor(vecti::DashColor::Danger);
 reboot.onChange([](const String &){
-  JouleDash.notify(joule::NotifyLevel::Warn, "Rebooting in 1s", 1000);
+  VectiDash.notify(vecti::NotifyLevel::Warn, "Rebooting in 1s", 1000);
   rebootAt = millis() + 1000;              // never delay() in here
 });
 
 void loop() {
-  JouleDash.tick();
+  VectiDash.tick();
   if (rebootAt && (int32_t)(millis() - rebootAt) >= 0) ESP.restart();
 }
 ```
@@ -414,28 +414,28 @@ void loop() {
 ### Push a notification from firmware
 
 ```cpp
-JouleDash.notify(joule::NotifyLevel::Success,
+VectiDash.notify(vecti::NotifyLevel::Success,
                  String("MQTT connected to ") + brokerHost, 4000);
 ```
 
 ### Plot a time-series
 
 ```cpp
-joule::DashCard tempChart(joule::DashType::Chart, "tc", "Temperature");
+vecti::DashCard tempChart(vecti::DashType::Chart, "tc", "Temperature");
 tempChart.setWidth(12);
-tempChart.chartSetType(joule::ChartType::Area);
+tempChart.chartSetType(vecti::ChartType::Area);
 tempChart.chartSetMaxPoints(120);
 
 void loop() {
   if (timeForNewSample()) tempChart.chartPushXY(millis()/1000.0f, readTemp());
-  JouleDash.tick();
+  VectiDash.tick();
 }
 ```
 
 ### Custom HTML widget — embed a graph, gauge, or anything
 
 ```cpp
-joule::DashCard custom(joule::DashType::Custom, "cus", "Charger state");
+vecti::DashCard custom(vecti::DashType::Custom, "cus", "Charger state");
 custom.setWidth(12);
 custom.setCustomHtml(R"(
   <div style='display:flex;gap:18px;align-items:center'>
@@ -449,7 +449,7 @@ custom.setCustomHtml(R"(
 
 void loop() {
   custom.setValue(String(currentA(), 1) + " A");   // updates #dash-cus-out
-  JouleDash.tick();
+  VectiDash.tick();
 }
 ```
 
@@ -459,7 +459,7 @@ The `#dash-<id>-out` span is the only hook. A `<script>` block inside
 ### Anonymous read, authenticated write
 
 ```cpp
-JouleDash.begin(&server, "admin", "joule", /*allowAnonymousRead=*/true);
+VectiDash.begin(&server, "admin", "vecti", /*allowAnonymousRead=*/true);
 ```
 
 Anyone can view the dashboard; only authenticated tabs can send `cmd`
@@ -486,9 +486,9 @@ sets the ticket and bounces back to the dashboard. Until they do, their
 ### Multi-tab layout
 
 ```cpp
-JouleDash.addTab("Overview");
-JouleDash.addTab("Controls");
-JouleDash.addTab("Charts");
+VectiDash.addTab("Overview");
+VectiDash.addTab("Controls");
+VectiDash.addTab("Charts");
 
 cTemp .setTab("Overview");
 cLed  .setTab("Controls");
@@ -511,7 +511,7 @@ cChart.setTab("Charts");
 
 ## Update cadence
 
-`JouleDash.tick()` coalesces dirty cards into a single push at most every
+`VectiDash.tick()` coalesces dirty cards into a single push at most every
 `setMinPushIntervalMs(100)` ms (default 10 Hz). Increase the throttle
 for high-frequency telemetry (`setMinPushIntervalMs(40)` for 25 Hz) or
 relax it on weak Wi-Fi (`setMinPushIntervalMs(500)`).
@@ -537,7 +537,7 @@ callbacks run — see the callback note above.
 | Symptom | Cause | Fix |
 |---|---|---|
 | WebSocket connects then disconnects every few seconds | Page tab is in the background and the browser throttles WS | Use `notify()` for important state; the UI will reconcile on focus |
-| Layout doesn't show new cards I `add()`-ed at runtime | Layout is cached on the client | Call `JouleDash.refreshLayout()` |
+| Layout doesn't show new cards I `add()`-ed at runtime | Layout is cached on the client | Call `VectiDash.refreshLayout()` |
 | Slider value snaps back to the old value when I drag | Two clients fighting over the value, or an `onChange` that clamps it | Last cmd wins, and a clamping callback wins over that. Coordinate via your own state machine |
 | `Chart` widget is blank | Fewer than two points pushed — the renderer bails before it draws | Push at least **two** points |
 | A `Dropdown` / `Radio` / `Checklist` shows "no options" | `setOptions()` ran after the layout frame went out | Call it before `add()`, or follow it with `refreshLayout()` |
@@ -563,8 +563,8 @@ only in the ESP32Async 3.x fork, so there is no ESP8266 build.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Apache-2.0 — see [LICENSE](LICENSE).
 
 ---
 
-<sub>**Author:** Chinmoy Bhuyan · **Email:** dikibhuyan@gmail.com · **(c)** 2026 — MIT</sub>
+<sub>**Author:** Chinmoy Bhuyan · **Email:** chinmoy@joulepoint.com · **(c)** 2026 — Apache-2.0</sub>
