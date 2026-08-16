@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// JouleSuite for ESP32 / ESP8266 — JouleOTA · JouleSerial · JouleNet · JouleDash
+// JouleSuite for ESP32 — JouleOTA · JouleSerial · JouleNet · JouleDash
 // Author: Chinmoy Bhuyan
 // Email:  dikibhuyan@gmail.com
 // (c) 2026 — MIT License
@@ -21,6 +21,8 @@ using joule::DashType;
 using joule::DashColor;
 
 constexpr int PIN_PUMP = 4;
+
+int threshPct = 35;   // "water below" setpoint, driven by cThresh
 
 DashCard hero  (DashType::Custom,   "hero",   "Plant · Monstera");
 DashCard cSoil (DashType::Donut,    "soil",   "Soil moisture", "%");
@@ -72,6 +74,8 @@ void setup() {
 
   cAuto  .setTab("Settings"); cAuto  .setWidth(6); cAuto.setValue(true);
   cThresh.setTab("Settings"); cThresh.setWidth(6); cThresh.setRange(10,80); cThresh.setStep(5);
+  cThresh.setValue(threshPct);
+  cThresh.onChange([](const String &v){ threshPct = v.toInt(); });
 
   cPump.onChange([](const String &v){
     digitalWrite(PIN_PUMP, v=="1" ? HIGH : LOW);
@@ -106,13 +110,19 @@ void loop() {
     cTank .setValue(tank);
     cTemp .setValue(23.4f + 1.0f * sin(now/13000.0), 1);
     cHum  .setValue(55.0f + 4.0f * cos(now/16000.0), 1);
-    cMode .setValue(soil < 35 ? "warn" : "ok");
+    // Same threshold the pump uses below — a hardcoded literal here would let
+    // the pill say "ok" while the pump is running.
+    cMode .setValue(soil < threshPct ? "warn" : "ok");
     hero  .setValue(String(soil) + "% soil · " + String(lux) + " lx · tank " + String(tank) + "%");
 
-    // Auto-water if enabled + dry.
-    int thresh = 35;   // value comes from cThresh's onChange in real code
-    if (soil < thresh) {
-      digitalWrite(PIN_PUMP, HIGH);
+    // Auto-water if enabled + dry. The off branch is the whole point: with
+    // only an on branch the pump latches HIGH the first time the soil reads
+    // dry and dry-runs the reservoir. Mirroring it back into cPump keeps the
+    // switch card from claiming OFF while the GPIO is on.
+    if (cAuto.value() == "1") {
+      bool wet = soil >= threshPct;
+      digitalWrite(PIN_PUMP, wet ? LOW : HIGH);
+      cPump.setValue(!wet);
     }
   }
   if (now - chartT > 10000) {

@@ -1,14 +1,15 @@
 // ---------------------------------------------------------------------------
-// JouleSuite for ESP32 / ESP8266 — JouleOTA · JouleSerial · JouleNet · JouleDash
+// JouleSuite for ESP32 — JouleOTA · JouleSerial · JouleNet · JouleDash
 // Author: Chinmoy Bhuyan
 // Email:  dikibhuyan@gmail.com
 // (c) 2026 — MIT License
 // ---------------------------------------------------------------------------
 //
 // HomeAutomation — multi-room lights/scenes/HVAC dashboard. Drives 4
-// relays + 1 PWM dimmer + 1 RGB strip. Replace the digitalWrite() /
-// ledcWrite() stubs with your wiring. Out of the box it just logs the
-// intent so the screenshot still shows a populated UI.
+// relays (GPIO 4/5/18/19), a PWM dimmer (GPIO 23) and an RGB strip
+// (GPIO 25/26/27). The AC setpoint has no actuator here; it only drives
+// the mode pill. Sensor values are simulated so the demo runs on a bare
+// ESP with nothing wired.
 
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
@@ -20,6 +21,20 @@ using joule::DashType;
 using joule::DashColor;
 
 constexpr int PIN_R1=4, PIN_R2=5, PIN_R3=18, PIN_R4=19, PIN_PWM=23, PIN_R=25, PIN_G=26, PIN_B=27;
+constexpr int CH_PWM=0, CH_R=1, CH_G=2, CH_B=3;   // LEDC channels
+
+// LEDC is channel-addressed on arduino-esp32 2.x (ledcSetup + ledcAttachPin,
+// then ledcWrite(channel, ...)) and pin-addressed on 3.x, which dropped those
+// two functions. This repo builds against 2.0.17; keep both cores working.
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+  #define PWM_BEGIN(pin, ch)        ledcAttachChannel((pin), 5000, 8, (ch))
+  #define PWM_WRITE(pin, ch, duty)  ledcWrite((pin), (duty))
+#else
+  #define PWM_BEGIN(pin, ch)        (ledcSetup((ch), 5000, 8), ledcAttachPin((pin), (ch)))
+  #define PWM_WRITE(pin, ch, duty)  ledcWrite((ch), (duty))
+#endif
+
+int acSetpoint = 22;    // °C, driven by cAc
 
 DashCard hero    (DashType::Custom, "hero",   "Home");
 DashCard cLiving (DashType::Switch, "living", "Living-room lights");
@@ -42,6 +57,9 @@ DashCard sceneAway (DashType::Button,"sa",    "🚪 Away");
 void setup() {
   Serial.begin(115200);
   pinMode(PIN_R1,OUTPUT); pinMode(PIN_R2,OUTPUT); pinMode(PIN_R3,OUTPUT); pinMode(PIN_R4,OUTPUT);
+  // 8-bit PWM so the slider's 0..100 and the picker's 0x00..0xff map straight on.
+  PWM_BEGIN(PIN_PWM, CH_PWM);
+  PWM_BEGIN(PIN_R, CH_R); PWM_BEGIN(PIN_G, CH_G); PWM_BEGIN(PIN_B, CH_B);
 
   WiFi.begin("YOUR_SSID","YOUR_PASS");
   while (WiFi.status()!=WL_CONNECTED) delay(200);
@@ -72,9 +90,19 @@ void setup() {
   cBed   .setTab("Rooms"); cBed   .setWidth(3); cBed   .onChange([](const String &v){digitalWrite(PIN_R3,v=="1");});
   cPorch .setTab("Rooms"); cPorch .setWidth(3); cPorch .onChange([](const String &v){digitalWrite(PIN_R4,v=="1");});
   cDimmer.setTab("Rooms"); cDimmer.setWidth(6); cDimmer.setRange(0,100);
+  cDimmer.onChange([](const String &v){ PWM_WRITE(PIN_PWM, CH_PWM, v.toInt()*255/100); });
   cRgb   .setTab("Rooms"); cRgb   .setWidth(6); cRgb.setValue("#6366f1");
+  cRgb   .onChange([](const String &v){
+    // The colour card sends "#rrggbb".
+    long rgb = strtol(v.c_str() + (v.startsWith("#") ? 1 : 0), nullptr, 16);
+    PWM_WRITE(PIN_R, CH_R, (rgb>>16)&0xff);
+    PWM_WRITE(PIN_G, CH_G, (rgb>>8)&0xff);
+    PWM_WRITE(PIN_B, CH_B, rgb&0xff);
+  });
 
-  cAc    .setTab("Climate"); cAc    .setWidth(6); cAc.setRange(16,30); cAc.setStep(1); cAc.setValue(22);
+  cAc    .setTab("Climate"); cAc    .setWidth(6); cAc.setRange(16,30); cAc.setStep(1);
+  cAc.setValue(acSetpoint);
+  cAc.onChange([](const String &v){ acSetpoint = v.toInt(); });
   cAcMode.setTab("Climate"); cAcMode.setWidth(3); cAcMode.setValue("ok");
   cTemp  .setTab("Climate"); cTemp  .setWidth(3);
   cHum   .setTab("Climate"); cHum   .setWidth(3);
@@ -104,9 +132,11 @@ void loop() {
   uint32_t now = millis();
   if (now - last > 2000) {
     last = now;
-    cTemp .setValue(22.5f + 0.4f * sin(now/9000.0), 1);
+    float indoor = 22.5f + 0.4f * sin(now/9000.0);
+    cTemp .setValue(indoor, 1);
     cHum  .setValue(46.0f + 3.0f * cos(now/12000.0), 1);
     cPower.setValue((int)(620 + 120 * sin(now/4000.0)));
+    cAcMode.setValue(indoor > acSetpoint + 0.5f ? "cooling" : "ok");
     int onCount = 0;
     onCount += digitalRead(PIN_R1) + digitalRead(PIN_R2) + digitalRead(PIN_R3) + digitalRead(PIN_R4);
     hero.setValue(String(onCount) + " of 4 lights on · " + String((int)cTemp.value().toFloat()) + " °C indoors");

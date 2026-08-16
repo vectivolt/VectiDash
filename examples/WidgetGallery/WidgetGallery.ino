@@ -1,14 +1,21 @@
 // ---------------------------------------------------------------------------
-// JouleSuite for ESP32 / ESP8266 — JouleOTA · JouleSerial · JouleNet · JouleDash
+// JouleSuite for ESP32 — JouleOTA · JouleSerial · JouleNet · JouleDash
 // Author: Chinmoy Bhuyan
 // Email:  dikibhuyan@gmail.com
 // (c) 2026 — MIT License
 // ---------------------------------------------------------------------------
 //
-// WidgetGallery — every JouleDash widget type rendered in one beautiful
-// dashboard, with simulated values that exercise the full visual range.
-// Use this sketch as a living style guide: drop into a fresh board, look
-// at every component side-by-side, copy what you need into your own sketch.
+// WidgetGallery — the 16 most-used JouleDash widget types in one dashboard,
+// with simulated values that exercise the full visual range. Use this sketch
+// as a living style guide: drop into a fresh board, look at the components
+// side-by-side, copy what you need into your own sketch.
+//
+// The library ships 50 types; the rest (badge, led, battery, signal, uptime,
+// table, logview, sparkline, dial, bar, level, compass, thermo, multichart,
+// histogram, scatter, heatmap, confirm, momentary, stepper, range, dropdown,
+// radio, checklist, textarea, password, keypad, xypad, knob, datetime,
+// qrcode, header, divider, text) are catalogued in the README with the value
+// format each one expects.
 
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
@@ -20,8 +27,8 @@ using joule::DashCard;
 using joule::DashType;
 using joule::DashColor;
 
-// One card per widget type — keep them in declaration order so the layout
-// reads top-to-bottom matching the JouleDash README's widget catalogue.
+// Keep them in declaration order so the layout reads top-to-bottom matching
+// the JouleDash README's widget catalogue.
 DashCard hero    (DashType::Custom,      "hero",  "JouleDash Widget Gallery");
 
 DashCard cNumber (DashType::Number,      "num",   "Number card",      "kW");
@@ -65,7 +72,7 @@ void setup() {
           "Live demo</div>"
         "<div style='font-size:22px;font-weight:800;background:var(--grad);"
           "-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent'>"
-          "Every widget JouleDash ships</div>"
+          "The 16 most-used JouleDash widgets</div>"
         "<div style='font-size:12px;color:var(--muted);margin-top:2px'>"
           "Tick: <span id='dash-hero-out'>—</span></div>"
       "</div></div>");

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// JouleSuite for ESP32 / ESP8266 — JouleOTA · JouleSerial · JouleNet · JouleDash
+// JouleSuite for ESP32 — JouleOTA · JouleSerial · JouleNet · JouleDash
 // Author: Chinmoy Bhuyan
 // Email:  dikibhuyan@gmail.com
 // (c) 2026 — MIT License
